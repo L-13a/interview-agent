@@ -1,7 +1,11 @@
 import json
-import anthropic
+import os
+from openai import OpenAI
 
-_client = anthropic.Anthropic()
+_client = OpenAI(
+    api_key=os.getenv("DEEPSEEK_API_KEY", "placeholder"),
+    base_url="https://api.deepseek.com"
+)
 
 
 def parse_jd(jd_text: str) -> dict:
@@ -11,13 +15,17 @@ def parse_jd(jd_text: str) -> dict:
         {"company": str, "role": str, "role_type": str, "key_skills": list[str]}
         role_type is one of: commercial, ai_product, growth, platform, other
     """
-    response = _client.messages.create(
-        model="claude-sonnet-4-6",
+    response = _client.chat.completions.create(
+        model="deepseek-chat",
         max_tokens=512,
-        system="You extract structured information from job descriptions. Return only valid JSON, no explanation.",
-        messages=[{
-            "role": "user",
-            "content": f"""Extract from this job description:
+        messages=[
+            {
+                "role": "system",
+                "content": "You extract structured information from job descriptions. Return only valid JSON, no explanation."
+            },
+            {
+                "role": "user",
+                "content": f"""Extract from this job description:
 - company: company name (string)
 - role: exact job title (string)
 - role_type: one of "commercial", "ai_product", "growth", "platform", "other"
@@ -25,6 +33,7 @@ def parse_jd(jd_text: str) -> dict:
 
 JD:
 {jd_text}"""
-        }]
+            }
+        ]
     )
-    return json.loads(response.content[0].text)
+    return json.loads(response.choices[0].message.content)

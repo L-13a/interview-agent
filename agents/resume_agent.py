@@ -1,6 +1,10 @@
-import anthropic
+import os
+from openai import OpenAI
 
-_client = anthropic.Anthropic()
+_client = OpenAI(
+    api_key=os.getenv("DEEPSEEK_API_KEY", "placeholder"),
+    base_url="https://api.deepseek.com"
+)
 
 
 def run(jd_info: dict, kb) -> str:
@@ -17,8 +21,8 @@ def run(jd_info: dict, kb) -> str:
 
 
 def _generate_bullets(jd_info: dict, context: str) -> str:
-    response = _client.messages.create(
-        model="claude-sonnet-4-6",
+    response = _client.chat.completions.create(
+        model="deepseek-chat",
         max_tokens=1024,
         messages=[{
             "role": "user",
@@ -39,12 +43,12 @@ def _generate_bullets(jd_info: dict, context: str) -> str:
 用中文输出。"""
         }]
     )
-    return response.content[0].text
+    return response.choices[0].message.content
 
 
 def _critique_bullets(jd_info: dict, draft: str) -> str:
-    response = _client.messages.create(
-        model="claude-sonnet-4-6",
+    response = _client.chat.completions.create(
+        model="deepseek-chat",
         max_tokens=512,
         messages=[{
             "role": "user",
@@ -60,12 +64,12 @@ def _critique_bullets(jd_info: dict, draft: str) -> str:
 列出需要改进的具体建议，简短。"""
         }]
     )
-    return response.content[0].text
+    return response.choices[0].message.content
 
 
 def _revise_bullets(jd_info: dict, draft: str, critique: str) -> str:
-    response = _client.messages.create(
-        model="claude-sonnet-4-6",
+    response = _client.chat.completions.create(
+        model="deepseek-chat",
         max_tokens=1024,
         messages=[{
             "role": "user",
@@ -81,4 +85,4 @@ def _revise_bullets(jd_info: dict, draft: str, critique: str) -> str:
 用中文输出。"""
         }]
     )
-    return response.content[0].text
+    return response.choices[0].message.content

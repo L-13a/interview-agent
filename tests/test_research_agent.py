@@ -17,15 +17,15 @@ def _mock_tavily(content: str):
     return mock
 
 
-def _mock_claude(text: str):
+def _mock_deepseek(text: str):
     mock_resp = MagicMock()
-    mock_resp.content = [MagicMock(text=text)]
+    mock_resp.choices = [MagicMock(message=MagicMock(content=text))]
     return mock_resp
 
 
 def test_research_returns_string():
     with patch("agents.research_agent._tavily", _mock_tavily("字节跳动旗下有抖音、今日头条")), \
-         patch("agents.research_agent._anthropic.messages.create", return_value=_mock_claude("## 核心业务线\n- 抖音")):
+         patch("agents.research_agent._client.chat.completions.create", return_value=_mock_deepseek("## 核心业务线\n- 抖音")):
         result = run(JD_INFO)
     assert isinstance(result, str)
     assert len(result) > 0
@@ -34,7 +34,7 @@ def test_research_returns_string():
 def test_research_makes_three_searches():
     mock_tavily = _mock_tavily("some content")
     with patch("agents.research_agent._tavily", mock_tavily), \
-         patch("agents.research_agent._anthropic.messages.create", return_value=_mock_claude("result")):
+         patch("agents.research_agent._client.chat.completions.create", return_value=_mock_deepseek("result")):
         run(JD_INFO)
     assert mock_tavily.search.call_count == 3
 
@@ -43,6 +43,6 @@ def test_research_degrades_gracefully_on_tavily_failure():
     mock_tavily = MagicMock()
     mock_tavily.search.side_effect = Exception("API error")
     with patch("agents.research_agent._tavily", mock_tavily), \
-         patch("agents.research_agent._anthropic.messages.create", return_value=_mock_claude("Fallback analysis")):
+         patch("agents.research_agent._client.chat.completions.create", return_value=_mock_deepseek("Fallback analysis")):
         result = run(JD_INFO)
     assert isinstance(result, str)

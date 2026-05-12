@@ -1,8 +1,11 @@
 import os
-import anthropic
+from openai import OpenAI
 from tavily import TavilyClient
 
-_anthropic = anthropic.Anthropic()
+_client = OpenAI(
+    api_key=os.getenv("DEEPSEEK_API_KEY", "placeholder"),
+    base_url="https://api.deepseek.com"
+)
 _tavily = TavilyClient(api_key=os.getenv("TAVILY_API_KEY", "placeholder"))
 
 
@@ -13,8 +16,8 @@ def run(jd_info: dict) -> str:
 
     search_results = _gather_search_results(company, jd_info.get("role_type", ""))
 
-    response = _anthropic.messages.create(
-        model="claude-sonnet-4-6",
+    response = _client.chat.completions.create(
+        model="deepseek-chat",
         max_tokens=1024,
         messages=[{
             "role": "user",
@@ -30,12 +33,12 @@ Source information:
 {search_results}"""
         }]
     )
-    return response.content[0].text
+    return response.choices[0].message.content
 
 
 def _gather_search_results(company: str, role_type: str) -> str:
     queries = [
-        f"{company} 业务线 产品矩阵 2026",
+        f"{company} 业务线 产品矩阵 2025",
         f"{company} {role_type} 战略 最新动态",
         f"{company} 公司文化 价值观 面试风格",
     ]

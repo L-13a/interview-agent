@@ -1,7 +1,11 @@
-import anthropic
+import os
+from openai import OpenAI
 from pathlib import Path
 
-_client = anthropic.Anthropic()
+_client = OpenAI(
+    api_key=os.getenv("DEEPSEEK_API_KEY", "placeholder"),
+    base_url="https://api.deepseek.com"
+)
 PROFILE_PATH = Path("./knowledge/self_profile.md")
 
 
@@ -9,8 +13,8 @@ def run(jd_info: dict, company_research: str) -> str:
     """Generate interview question bank with answer framework hints."""
     profile = PROFILE_PATH.read_text(encoding="utf-8") if PROFILE_PATH.exists() else "（无个人简介）"
 
-    response = _client.messages.create(
-        model="claude-sonnet-4-6",
+    response = _client.chat.completions.create(
+        model="deepseek-chat",
         max_tokens=2048,
         messages=[{
             "role": "user",
@@ -41,4 +45,4 @@ AI PM 专项：模型评估、AI功能成功指标定义等。每题附一行**�
 建议候选人向面试官提问的高质量问题（体现产品思维和对公司的了解）。"""
         }]
     )
-    return response.content[0].text
+    return response.choices[0].message.content
