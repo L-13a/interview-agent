@@ -1,0 +1,1621 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interview Prep Agent</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:         #F5F2EE;
+      --ink:        #0A0A0A;
+      --meta:       #8C8680;
+      --rule:       #0A0A0A;
+      --rule-soft:  #C8C4BE;
+      --sans:       'Space Grotesk', system-ui, sans-serif;
+      --serif:      'Lora', Georgia, serif;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--serif);
+      font-size: 15px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ─── Typography helpers ─────────────────────────────────── */
+    .label {
+      font-family: var(--sans);
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--meta);
+    }
+
+    .label-ink {
+      font-family: var(--sans);
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--ink);
+    }
+
+    /* ─── Layout shell ───────────────────────────────────────── */
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: 56px 1fr 40px;
+    }
+
+    /* ─── Nav ────────────────────────────────────────────────── */
+    nav {
+      border-bottom: 1px solid var(--rule);
+      padding: 0 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: var(--sans);
+    }
+
+    .nav-brand {
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+
+    .nav-steps {
+      display: flex;
+      gap: 36px;
+    }
+
+    .nav-step {
+      font-family: var(--sans);
+      font-size: 10px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--meta);
+      padding-top: 6px;
+      position: relative;
+      transition: color 200ms;
+    }
+
+    .nav-step.active { color: var(--ink); }
+
+    .nav-step.active::before {
+      content: '';
+      position: absolute;
+      top: -6px;
+      left: 0;
+      right: 0;
+      height: 1.5px;
+      background: var(--ink);
+      transform-origin: left;
+      animation: drawH 380ms ease-out forwards;
+    }
+
+    .nav-step.done { color: var(--meta); }
+
+    .nav-step.done::after {
+      content: '·';
+      position: absolute;
+      top: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 16px;
+      color: var(--meta);
+    }
+
+    .nav-right {
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--meta);
+      font-family: var(--sans);
+    }
+
+    /* ─── Screens ────────────────────────────────────────────── */
+    .screen {
+      display: none;
+    }
+    .screen.active {
+      display: grid;
+      animation: fadeUp 320ms ease-out both;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes drawH {
+      from { transform: scaleX(0); }
+      to   { transform: scaleX(1); }
+    }
+
+    @keyframes drawV {
+      from { transform: scaleY(0); }
+      to   { transform: scaleY(1); }
+    }
+
+    /* ─── Sidebar (shared) ───────────────────────────────────── */
+    .sidebar {
+      border-right: 1px solid var(--rule);
+      padding: 52px 40px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-num {
+      font-family: var(--sans);
+      font-size: 72px;
+      font-weight: 300;
+      line-height: 1;
+      letter-spacing: -0.03em;
+      margin-bottom: 10px;
+    }
+
+    .sidebar-step { margin-bottom: 28px; }
+
+    .sidebar-desc {
+      font-size: 13px;
+      line-height: 1.8;
+      color: var(--meta);
+      font-style: italic;
+    }
+
+    /* ─── Buttons ────────────────────────────────────────────── */
+    .btn-ghost {
+      font-family: var(--sans);
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      background: none;
+      border: none;
+      color: var(--ink);
+      cursor: pointer;
+      padding: 8px 0;
+      position: relative;
+      transition: transform 200ms;
+    }
+    .btn-ghost::after {
+      content: '';
+      position: absolute;
+      bottom: 4px; left: 0; right: 0;
+      height: 1px;
+      background: var(--ink);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 220ms ease;
+    }
+    .btn-ghost:hover::after  { transform: scaleX(1); }
+    .btn-ghost:hover         { transform: translateY(-2px); }
+
+    .btn-ruled {
+      font-family: var(--sans);
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      background: none;
+      border: 1px solid var(--rule);
+      color: var(--ink);
+      cursor: pointer;
+      padding: 10px 28px;
+      transition: transform 200ms;
+    }
+    .btn-ruled:hover { transform: translateY(-2px); }
+    .btn-ruled:disabled {
+      color: var(--meta);
+      border-color: var(--rule-soft);
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* ─── Fields ─────────────────────────────────────────────── */
+    textarea, input[type="text"] {
+      background: transparent;
+      border: none;
+      outline: none;
+      font-family: var(--serif);
+      font-size: 14px;
+      line-height: 1.85;
+      color: var(--ink);
+    }
+
+    textarea {
+      width: 100%;
+      resize: none;
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 14px;
+    }
+
+    textarea::placeholder, input::placeholder {
+      color: var(--rule-soft);
+      font-style: italic;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      border-bottom: 1px solid var(--rule-soft);
+      padding: 6px 0 10px;
+      transition: border-color 200ms;
+    }
+    input[type="text"]:focus { border-bottom-color: var(--rule); }
+
+    /* ─── Rules ──────────────────────────────────────────────── */
+    .rule-h {
+      height: 1px;
+      background: var(--rule);
+      transform-origin: left;
+      animation: drawH 500ms ease-out both;
+    }
+    .rule-h-soft {
+      height: 1px;
+      background: var(--rule-soft);
+    }
+
+    /* ─── Markdown output ────────────────────────────────────── */
+    .prose h2 {
+      font-family: var(--sans);
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      font-weight: 500;
+      color: var(--meta);
+      border-top: 1px solid var(--rule-soft);
+      padding-top: 20px;
+      margin-top: 36px;
+      margin-bottom: 14px;
+    }
+    .prose h2:first-child { border-top: none; margin-top: 0; padding-top: 0; }
+    .prose p  { font-size: 14px; line-height: 1.9; margin-bottom: 14px; }
+    .prose ul { padding-left: 16px; margin-bottom: 14px; }
+    .prose li { font-size: 14px; line-height: 1.9; margin-bottom: 6px; }
+    .prose strong { font-family: var(--sans); font-weight: 500; }
+    .prose .q-item {
+      border-top: 1px solid var(--rule-soft);
+      padding: 20px 0;
+    }
+    .prose .q-item:last-child { border-bottom: 1px solid var(--rule-soft); }
+    .prose .q-tag {
+      font-family: var(--sans);
+      font-size: 10px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--meta);
+      margin-bottom: 8px;
+    }
+    .prose .q-text {
+      font-size: 14px;
+      line-height: 1.85;
+    }
+
+    /* ─── Corner marks (card borders) ───────────────────────── */
+    .corner {
+      position: relative;
+    }
+    .corner::before, .corner::after {
+      content: '';
+      position: absolute;
+      background: var(--ink);
+    }
+    .corner::before { top: 0; left: 0; width: 20px; height: 1px; }
+    .corner::after  { top: 0; left: 0; width: 1px;  height: 20px; }
+
+    /* ─── SCREEN 1: Input ────────────────────────────────────── */
+    #screen-input {
+      grid-template-columns: 260px 1fr;
+    }
+
+    .input-main {
+      padding: 52px 64px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .input-eyebrow { margin-bottom: 14px; }
+
+    .input-heading {
+      font-family: var(--sans);
+      font-size: 28px;
+      font-weight: 400;
+      letter-spacing: -0.01em;
+      line-height: 1.2;
+      margin-bottom: 44px;
+    }
+
+    .input-area-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .input-area-wrap .label { margin-bottom: 12px; }
+
+    textarea#jd-text {
+      flex: 1;
+      min-height: 320px;
+    }
+
+    .input-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 28px;
+    }
+
+    /* ─── SCREEN 2: Processing ───────────────────────────────── */
+    #screen-processing {
+      grid-template-columns: 260px 1fr 1fr;
+    }
+
+    .phase-col {
+      padding: 52px 48px;
+      border-right: 1px solid var(--rule-soft);
+      display: flex;
+      flex-direction: column;
+    }
+    .phase-col:last-child { border-right: none; }
+
+    .phase-head {
+      margin-bottom: 44px;
+    }
+
+    .phase-num {
+      font-family: var(--sans);
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--meta);
+      margin-bottom: 6px;
+    }
+
+    .phase-title {
+      font-family: var(--sans);
+      font-size: 22px;
+      font-weight: 400;
+      letter-spacing: -0.01em;
+    }
+
+    .agent-card {
+      border-top: 1px solid var(--rule-soft);
+      padding: 22px 0;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .agent-card:first-of-type { border-top-color: var(--rule); }
+
+    .agent-card-name {
+      font-family: var(--sans);
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+
+    .agent-card-desc {
+      font-size: 12px;
+      color: var(--meta);
+      font-style: italic;
+      line-height: 1.6;
+    }
+
+    .agent-status {
+      font-family: var(--sans);
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--meta);
+      white-space: nowrap;
+      margin-top: 2px;
+    }
+    .agent-status.running { color: var(--ink); }
+    .agent-status.done    { color: var(--meta); text-decoration: line-through; }
+
+    .prog-track {
+      height: 1px;
+      background: var(--rule-soft);
+      margin-top: 12px;
+      position: relative;
+    }
+    .prog-fill {
+      position: absolute; top: 0; left: 0;
+      height: 1px;
+      background: var(--ink);
+      width: 0%;
+      transition: width 600ms cubic-bezier(.4,0,.2,1);
+    }
+
+    .proc-sidebar-foot {
+      margin-top: auto;
+      padding-top: 48px;
+      border-top: 1px solid var(--rule-soft);
+    }
+
+    .elapsed-num {
+      font-family: var(--sans);
+      font-size: 40px;
+      font-weight: 300;
+      line-height: 1;
+      margin-top: 6px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .phase2-note {
+      margin-top: 44px;
+      border-top: 1px solid var(--rule-soft);
+      padding-top: 22px;
+    }
+
+    /* ─── SCREEN 3: Review ───────────────────────────────────── */
+    #screen-review {
+      grid-template-columns: 260px 1fr;
+    }
+
+    .review-main {
+      padding: 52px 64px;
+      overflow-y: auto;
+    }
+
+    .review-eyebrow-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 14px;
+    }
+
+    .review-company-tag {
+      font-family: var(--sans);
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .review-prose { max-width: 620px; margin: 32px 0 52px; }
+
+    .correction-block {
+      border-top: 1px solid var(--rule);
+      padding-top: 28px;
+      max-width: 620px;
+    }
+
+    .correction-block .label { margin-bottom: 14px; display: block; }
+
+    .correction-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 28px;
+    }
+
+    /* ─── SCREEN 4: Report ───────────────────────────────────── */
+    #screen-report {
+      grid-template-rows: 52px 1fr;
+    }
+
+    .report-tabs-bar {
+      border-bottom: 1px solid var(--rule);
+      padding: 0 48px;
+      display: flex;
+      align-items: flex-end;
+    }
+
+    .report-tab {
+      font-family: var(--sans);
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--meta);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0 0 16px;
+      margin-right: 36px;
+      position: relative;
+      transition: color 200ms;
+    }
+    .report-tab.active { color: var(--ink); }
+    .report-tab.active::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1.5px;
+      background: var(--ink);
+      transform-origin: left;
+      animation: drawH 360ms ease-out both;
+    }
+
+    .report-body {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      overflow: hidden;
+    }
+
+    .report-sidebar {
+      border-right: 1px solid var(--rule);
+      padding: 40px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .meta-row {
+      border-top: 1px solid var(--rule-soft);
+      padding: 14px 0;
+    }
+    .meta-row:first-child { border-top: none; }
+    .meta-row .label { margin-bottom: 4px; display: block; }
+    .meta-val {
+      font-family: var(--sans);
+      font-size: 13px;
+      font-weight: 500;
+      line-height: 1.5;
+    }
+
+    .skills-list {
+      margin-top: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+    .skill-tag {
+      font-family: var(--sans);
+      font-size: 12px;
+      border-top: 1px solid var(--rule-soft);
+      padding: 6px 0;
+      color: var(--ink);
+    }
+    .skill-tag:first-child { border-top: none; }
+
+    .report-sidebar-foot {
+      margin-top: auto;
+      padding-top: 32px;
+      border-top: 1px solid var(--rule-soft);
+    }
+
+    .report-main {
+      padding: 48px 64px;
+      overflow-y: auto;
+      max-width: 860px;
+    }
+
+    .tab-panel { display: none; animation: fadeUp 280ms ease-out both; }
+    .tab-panel.active { display: block; }
+
+    /* ─── Footer ─────────────────────────────────────────────── */
+    footer {
+      border-top: 1px solid var(--rule-soft);
+      padding: 0 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: var(--sans);
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--meta);
+    }
+
+    /* ─── Profile Overlay ───────────────────────────────────── */
+    .profile-overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 100;
+      display: grid;
+      grid-template-rows: 56px 1fr 52px;
+    }
+
+    .profile-nav {
+      border-bottom: 1px solid var(--rule);
+      padding: 0 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: var(--sans);
+    }
+
+    .profile-doc-tabs { display: flex; gap: 0; }
+
+    .profile-doc-tab {
+      font-family: var(--sans);
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--meta);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 6px 28px 0 0;
+      position: relative;
+      transition: color 200ms;
+    }
+    .profile-doc-tab.active { color: var(--ink); }
+    .profile-doc-tab.active::before {
+      content: '';
+      position: absolute;
+      top: -6px; left: 0; right: 28px;
+      height: 1.5px;
+      background: var(--ink);
+      transform-origin: left;
+      animation: drawH 360ms ease-out both;
+    }
+
+    .profile-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      overflow: hidden;
+    }
+
+    .editor-pane {
+      border-right: 1px solid var(--rule-soft);
+      padding: 36px 48px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .editor-pane .label { margin-bottom: 14px; display: block; }
+
+    #profile-editor {
+      flex: 1;
+      width: 100%;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-family: 'Space Grotesk', monospace;
+      font-size: 13px;
+      line-height: 1.9;
+      color: var(--ink);
+      resize: none;
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .preview-pane {
+      padding: 36px 48px;
+      overflow-y: auto;
+    }
+    .preview-pane .label { margin-bottom: 14px; display: block; }
+
+    .profile-footer {
+      border-top: 1px solid var(--rule-soft);
+      padding: 0 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: var(--sans);
+    }
+
+    #profile-status {
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--meta);
+      transition: color 300ms;
+    }
+    #profile-status.ok  { color: var(--ink); }
+    #profile-status.err { color: #b03a2e; }
+
+    /* ─── Table (report) ─────────────────────────────────────── */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 13px;
+    }
+    .data-table thead tr { border-bottom: 1px solid var(--rule); }
+    .data-table th {
+      font-family: var(--sans);
+      font-size: 10px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      font-weight: 500;
+      color: var(--meta);
+      text-align: left;
+      padding-bottom: 12px;
+    }
+    .data-table td {
+      padding: 14px 0;
+      border-bottom: 1px solid var(--rule-soft);
+      vertical-align: top;
+      line-height: 1.7;
+    }
+    .data-table td:first-child {
+      font-family: var(--sans);
+      font-size: 11px;
+      color: var(--meta);
+      letter-spacing: 0.1em;
+      white-space: nowrap;
+      padding-right: 32px;
+    }
+
+    /* ─── Go-to-Interview button ─────────────────────────────── */
+    .go-interview-bar {
+      margin-top: 36px;
+      border-top: 1px solid var(--rule-soft);
+      padding-top: 24px;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    /* ─── Nav step back navigation ───────────────────────────── */
+    .nav-step.done { cursor: pointer; }
+    .nav-step.done:hover { color: var(--ink); }
+
+    /* ─── History pane ───────────────────────────────────────── */
+    .profile-content.history-mode .editor-pane,
+    .profile-content.history-mode .preview-pane { display: none; }
+
+    .history-pane {
+      display: none;
+      grid-column: 1 / -1;
+    }
+    .profile-content.history-mode .history-pane {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      overflow: hidden;
+    }
+
+    .history-list {
+      border-right: 1px solid var(--rule-soft);
+      padding: 28px 32px;
+      overflow-y: auto;
+    }
+
+    .history-item {
+      border-top: 1px solid var(--rule-soft);
+      padding: 14px 0;
+      cursor: pointer;
+      transition: opacity 150ms;
+    }
+    .history-item:first-child { border-top: none; }
+    .history-item:hover { opacity: 0.65; }
+    .history-item.selected .history-item-co { font-weight: 500; }
+
+    .history-item-co {
+      font-family: var(--sans);
+      font-size: 13px;
+      margin-bottom: 3px;
+    }
+    .history-item-date {
+      font-family: var(--sans);
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--meta);
+    }
+
+    .history-detail {
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .history-detail-tabs {
+      border-bottom: 1px solid var(--rule-soft);
+      padding: 0 32px;
+      display: flex;
+      align-items: flex-end;
+      flex-shrink: 0;
+    }
+
+    .history-detail-tab {
+      font-family: var(--sans);
+      font-size: 10px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--meta);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 14px 0;
+      margin-right: 24px;
+      position: relative;
+      transition: color 200ms;
+    }
+    .history-detail-tab.active { color: var(--ink); }
+    .history-detail-tab.active::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1.5px;
+      background: var(--ink);
+      transform-origin: left;
+      animation: drawH 320ms ease-out both;
+    }
+
+    .history-detail-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px 32px;
+    }
+
+    .history-restore-bar {
+      border-top: 1px solid var(--rule-soft);
+      padding: 14px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ── Nav ──────────────────────────────────────────────── -->
+  <nav>
+    <span class="nav-brand">Interview Prep Agent</span>
+    <div class="nav-steps" id="nav-steps">
+      <span class="nav-step active" data-step="0">Input</span>
+      <span class="nav-step"       data-step="1">Processing</span>
+      <span class="nav-step"       data-step="2">Review</span>
+      <span class="nav-step"       data-step="3">Report</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:28px;">
+      <button class="btn-ghost" onclick="openProfile()" style="font-size:10px;letter-spacing:0.16em;">Profile</button>
+      <span class="nav-right label" id="nav-date"></span>
+    </div>
+  </nav>
+
+  <!-- ── Screen 1: JD Input ───────────────────────────────── -->
+  <div id="screen-input" class="screen active">
+    <div class="sidebar">
+      <div class="sidebar-num">01</div>
+      <div class="label sidebar-step">Job Description</div>
+      <p class="sidebar-desc">Paste the full JD. The agent extracts company, role type, and key skills before running.</p>
+    </div>
+    <div class="input-main">
+      <div class="label input-eyebrow">Step 01 — Input</div>
+      <h1 class="input-heading">Paste your<br>Job Description</h1>
+      <div class="input-area-wrap">
+        <div class="label">JD Content</div>
+        <textarea id="jd-text" rows="14" placeholder="Paste the job description here…&#10;&#10;The agent will identify the company, role type, and required skills before generating tailored materials."></textarea>
+        <div class="input-actions">
+          <span class="label">Press Analyze to continue</span>
+          <button class="btn-ruled" id="btn-analyze" onclick="goToProcessing()">Analyze</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Screen 2: Processing ─────────────────────────────── -->
+  <div id="screen-processing" class="screen">
+    <div class="sidebar">
+      <div class="sidebar-num">02</div>
+      <div class="label sidebar-step">Processing</div>
+      <p class="sidebar-desc" id="proc-subtitle">Running agents in parallel.</p>
+      <div class="proc-sidebar-foot">
+        <div class="label">Elapsed</div>
+        <div class="elapsed-num" id="elapsed">0:00</div>
+      </div>
+    </div>
+
+    <!-- Phase 1 col -->
+    <div class="phase-col">
+      <div class="phase-head">
+        <div class="phase-num">Phase 01</div>
+        <div class="phase-title">Parallel Execution</div>
+      </div>
+
+      <div class="agent-card">
+        <div>
+          <div class="agent-card-name">Resume Agent</div>
+          <div class="agent-card-desc">RAG retrieval → rewrite → self-reflection</div>
+          <div class="prog-track"><div class="prog-fill" id="prog-resume"></div></div>
+        </div>
+        <div class="agent-status running" id="st-resume">Running</div>
+      </div>
+
+      <div class="agent-card">
+        <div>
+          <div class="agent-card-name">Research Agent</div>
+          <div class="agent-card-desc">3× Tavily queries → company summary</div>
+          <div class="prog-track"><div class="prog-fill" id="prog-research"></div></div>
+        </div>
+        <div class="agent-status running" id="st-research">Running</div>
+      </div>
+    </div>
+
+    <!-- Phase 2 col -->
+    <div class="phase-col">
+      <div class="phase-head">
+        <div class="phase-num">Phase 02</div>
+        <div class="phase-title">Sequential</div>
+      </div>
+
+      <div class="agent-card">
+        <div>
+          <div class="agent-card-name">Interview Agent</div>
+          <div class="agent-card-desc">Generates question bank from company context + JD</div>
+          <div class="prog-track"><div class="prog-fill" id="prog-interview"></div></div>
+        </div>
+        <div class="agent-status" id="st-interview">Waiting</div>
+      </div>
+
+      <div class="phase2-note">
+        <div class="label" style="margin-bottom:10px;">Dependency</div>
+        <p style="font-size:13px;color:var(--meta);font-style:italic;line-height:1.75;">
+          Phase 02 begins only after human review of company research output.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Screen 3: Review ─────────────────────────────────── -->
+  <div id="screen-review" class="screen">
+    <div class="sidebar">
+      <div class="sidebar-num">03</div>
+      <div class="label sidebar-step">Review</div>
+      <p class="sidebar-desc">Verify the company research. Corrections are appended to the context before Phase 02 runs.</p>
+      <div style="margin-top:44px;">
+        <div class="label" style="margin-bottom:6px;">Company</div>
+        <div style="font-family:var(--sans);font-size:17px;font-weight:500;margin-bottom:20px;" id="rev-company">—</div>
+        <div class="label" style="margin-bottom:6px;">Role</div>
+        <div style="font-family:var(--sans);font-size:17px;font-weight:500;" id="rev-role">—</div>
+      </div>
+    </div>
+    <div class="review-main">
+      <div class="review-eyebrow-row">
+        <span class="label">Step 03 — Human Review</span>
+        <span class="review-company-tag" id="rev-tag">—</span>
+      </div>
+      <div class="rule-h"></div>
+      <div class="prose review-prose" id="review-prose"></div>
+      <div class="correction-block">
+        <span class="label">Correction / Supplement</span>
+        <input type="text" id="correction" placeholder="Add corrections or missing context (optional)…">
+        <div class="correction-actions">
+          <span class="label">Leave blank to skip</span>
+          <button class="btn-ruled" onclick="goToReport()">Confirm → Generate Report</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Screen 4: Report ─────────────────────────────────── -->
+  <div id="screen-report" class="screen">
+    <div class="report-tabs-bar" id="report-tabs">
+      <button class="report-tab active" data-panel="resume">01 &nbsp;Resume</button>
+      <button class="report-tab"        data-panel="research">02 &nbsp;Research</button>
+      <button class="report-tab"        data-panel="interview">03 &nbsp;Interview</button>
+    </div>
+    <div class="report-body">
+      <div class="report-sidebar">
+        <div class="meta-row">
+          <span class="label">Company</span>
+          <div class="meta-val" id="m-company">—</div>
+        </div>
+        <div class="meta-row">
+          <span class="label">Role</span>
+          <div class="meta-val" id="m-role">—</div>
+        </div>
+        <div class="meta-row">
+          <span class="label">Type</span>
+          <div class="meta-val" id="m-type">—</div>
+        </div>
+        <div class="meta-row">
+          <span class="label">Generated</span>
+          <div class="meta-val" id="m-date">—</div>
+        </div>
+        <div class="meta-row">
+          <span class="label">Key Skills</span>
+          <div class="skills-list" id="m-skills"></div>
+        </div>
+        <div class="report-sidebar-foot">
+          <button class="btn-ghost" onclick="downloadReport()">Download .md ↓</button>
+        </div>
+      </div>
+      <div class="report-main">
+        <div class="tab-panel active" id="panel-resume"></div>
+        <div class="tab-panel"        id="panel-research"></div>
+        <div class="tab-panel"        id="panel-interview"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Profile Overlay ─────────────────────────────────── -->
+  <div id="profile-overlay" class="profile-overlay" style="display:none;">
+    <div class="profile-nav">
+      <span class="nav-brand">Personal Info</span>
+      <div class="profile-doc-tabs" id="profile-doc-tabs">
+        <button class="profile-doc-tab active" data-doc="self">Self Profile</button>
+        <button class="profile-doc-tab"        data-doc="resume">Base Resume</button>
+        <button class="profile-doc-tab"        data-doc="experience">Experience</button>
+        <button class="profile-doc-tab"        data-doc="history">History</button>
+      </div>
+      <button class="btn-ghost" onclick="closeProfile()">Close ×</button>
+    </div>
+    <div class="profile-content">
+      <div class="editor-pane">
+        <span class="label">Markdown</span>
+        <textarea id="profile-editor" spellcheck="false" oninput="updatePreview()"></textarea>
+      </div>
+      <div class="preview-pane">
+        <span class="label">Preview</span>
+        <div class="prose" id="profile-preview"></div>
+      </div>
+      <!-- History pane (visible when History tab active) -->
+      <div class="history-pane" id="history-pane">
+        <div class="history-list" id="history-list"></div>
+        <div class="history-detail" id="history-detail" style="display:none;">
+          <div class="history-detail-tabs">
+            <button class="history-detail-tab active" data-htab="resume"    onclick="switchHistoryTab('resume')">Resume</button>
+            <button class="history-detail-tab"        data-htab="research"  onclick="switchHistoryTab('research')">Research</button>
+            <button class="history-detail-tab"        data-htab="interview" onclick="switchHistoryTab('interview')">Interview</button>
+            <button class="history-detail-tab"        data-htab="jd"        onclick="switchHistoryTab('jd')">JD</button>
+          </div>
+          <div class="history-detail-content">
+            <div class="hist-panel" id="hist-panel-resume"    data-htab="resume"></div>
+            <div class="hist-panel" id="hist-panel-research"  data-htab="research"  style="display:none;"></div>
+            <div class="hist-panel" id="hist-panel-interview" data-htab="interview" style="display:none;"></div>
+            <div class="hist-panel" id="hist-panel-jd"        data-htab="jd"        style="display:none;"></div>
+          </div>
+          <div class="history-restore-bar">
+            <span class="label" id="hist-restore-info"></span>
+            <button class="btn-ruled" onclick="restoreFromHistory()">Restore this run →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="profile-footer">
+      <span id="profile-status"></span>
+      <button class="btn-ruled" id="profile-footer-save" onclick="saveProfile()">Save →</button>
+    </div>
+  </div>
+
+  <!-- ── Footer ───────────────────────────────────────────── -->
+  <footer>
+    <span>Interview Prep Agent · v1.0</span>
+    <span id="footer-status">Ready</span>
+  </footer>
+
+</div>
+<script>
+/* ── State ──────────────────────────────────────────────────── */
+const S = {
+  step: 0,
+  jd: '',
+  info: { company: '', role: '', role_type: '', key_skills: [] },
+  research: '',
+  resume: '',
+  interview: '',
+  correction: '',
+  t0: null,
+  ticker: null,
+};
+
+const STORAGE_KEY = 'ipa_state';
+const HISTORY_KEY  = 'ipa_history';
+
+/* ── Persistence ────────────────────────────────────────────── */
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      step: S.step, jd: S.jd, info: S.info,
+      research: S.research, resume: S.resume,
+      interview: S.interview, correction: S.correction,
+    }));
+  } catch(e) {}
+}
+
+function saveToHistory() {
+  const entry = {
+    id: Date.now(),
+    date: new Date().toISOString(),
+    jd: S.jd,
+    company: S.info.company,
+    role: S.info.role,
+    role_type: S.info.role_type,
+    key_skills: S.info.key_skills,
+    research: S.research,
+    resume: S.resume,
+    interview: S.interview,
+  };
+  // Write to localStorage
+  const hist = getHistory();
+  const idx = hist.findIndex(h => h.jd === entry.jd && h.company === entry.company);
+  if (idx >= 0) hist[idx] = entry; else hist.unshift(entry);
+  try { localStorage.setItem(HISTORY_KEY, JSON.stringify(hist.slice(0, 20))); } catch(e) {}
+  // Write to server (fire-and-forget)
+  fetch('/api/history', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(entry),
+  }).catch(() => {});
+}
+
+function getHistory() {
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch { return []; }
+}
+
+async function syncHistoryFromServer() {
+  try {
+    const res = await fetch('/api/history');
+    if (!res.ok) return;
+    const { entries } = await res.json();
+    if (Array.isArray(entries) && entries.length > 0) {
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(entries));
+    }
+  } catch(e) {}
+}
+
+/* ── Mock content ───────────────────────────────────────────── */
+const MOCK_INFO = {
+  company: 'ByteDance',
+  role: '产品经理 · AI Products',
+  role_type: 'AI Product',
+  key_skills: ['产品设计', 'AI 落地', '数据分析', '跨部门协作', '用户研究'],
+};
+
+const MOCK_RESEARCH = `## 核心业务线
+
+**抖音 / TikTok** — 短视频与社交平台，全球用户逾15亿，广告收入核心来源。
+
+**今日头条** — 个性化信息流推荐，字节在国内的流量入口，依赖自研推荐算法。
+
+**飞书（Lark）** — 企业协作 SaaS，正在加速出海，对标 Notion + Slack 组合产品形态。
+
+**豆包** — AI 助手产品，已集成于抖音与飞书，是当前重点投入方向。
+
+**剪映 / CapCut** — 视频编辑工具，全球月活逾亿，AI 功能持续扩充。
+
+## 近期动态
+
+字节跳动于 2025 年 Q4 宣布将豆包大模型能力全面整合进飞书与抖音创作者工具链，AI 产品线收敛加速。
+
+2026 年初内部启动「Project Nova」——面向企业客户的 AI Agent 平台，抢先布局 Agentic 赛道。
+
+## 公司文化关键词
+
+**字节范儿** · 坦诚直接 · 追求极致 · 数据驱动 · Always Day 1 · 敢于挑战
+
+## What You Should Know
+
+**逻辑拆解高于结论** — 面试官几乎必追问「你是怎么想到这个方案的」，主动展示推理过程比给出答案更重要。
+
+**数据意识是门槛** — AI 产品岗同样需要能说清核心指标（DAU、留存、LTV）以及数据驱动决策的具体案例。
+
+**提前体验豆包** — 面试官大概率会问你对当前 AI 助手产品的看法，有独立观点比无准备加分显著。`;
+
+const MOCK_RESUME = `## 职业定位
+
+具备 AI 产品从 0→1 经验的产品经理，擅长将大模型能力转化为可落地的用户工具，在跨职能团队中推动产品上线。
+
+## 核心经历
+
+**AI 助手功能迭代** &nbsp;·&nbsp; 2024.03 — 至今
+
+负责公司内部 AI 写作助手从原型到 DAU 5万+ 的全周期产品工作。主导用户研究 → 功能优先级 → 上线验证闭环；基于 A/B 测试将 Day-7 留存提升 18%。与算法团队深度协作，定义模型输出评估标准与 prompt 策略。
+
+**数据分析工具重构** &nbsp;·&nbsp; 2023.06 — 2024.02
+
+推动内部数据看板从 Excel 工作流迁移至自助 BI 平台，覆盖 200+ 业务侧用户。识别关键卡点后引入分层权限设计，将数据需求响应时间从 3 天降至当日。
+
+## 技能
+
+产品设计 · 用户研究 · SQL 数据分析 · AI Prompt Engineering · 飞书 / Notion · Figma`;
+
+const MOCK_INTERVIEW = `## 产品设计
+
+如果你来设计豆包的「记忆功能」，你会如何定义 MVP 范围？如何决定哪些记忆应该被保留、哪些被遗忘？
+
+抖音想为创作者推出一个 AI 选题助手。请给出产品方案，包括核心功能、关键指标和你最担心的风险。
+
+## 行为面试
+
+描述一次你与算法团队发生分歧的经历。你是如何推动决策的？
+
+你如何在没有完整数据的情况下做出产品决策？请给出具体案例。
+
+## 数据分析
+
+豆包的 DAU 过去两周下降了 12%，你会从哪些维度排查原因？写出你的诊断框架。
+
+## 开放性问题
+
+你如何看待 AI 助手的「人格设计」？字节的现有产品和你心目中的理想产品有什么差距？`;
+
+/* ── Helpers ────────────────────────────────────────────────── */
+function setStep(n) {
+  S.step = n;
+  document.querySelectorAll('.nav-step').forEach((el, i) => {
+    el.classList.toggle('active', i === n);
+    el.classList.toggle('done', i < n);
+  });
+}
+
+/* ── Back navigation via nav steps ─────────────────────────── */
+document.getElementById('nav-steps').addEventListener('click', e => {
+  const step = e.target.closest('.nav-step');
+  if (!step || !step.classList.contains('done')) return;
+  const n = +step.dataset.step;
+  saveState();
+  if (n === 0) {
+    setStep(0); showScreen('screen-input');
+    document.getElementById('jd-text').value = S.jd;
+  } else if (n === 2 && S.step === 3) {
+    setStep(2); showScreen('screen-review');
+    document.getElementById('rev-company').textContent = S.info.company;
+    document.getElementById('rev-role').textContent    = S.info.role;
+    document.getElementById('rev-tag').textContent     = `${S.info.company} · ${S.info.role_type}`;
+    document.getElementById('review-prose').innerHTML  = `<div class="prose">${md(S.research)}</div>`;
+    document.getElementById('correction').value = S.correction;
+  }
+});
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => {
+    s.style.display = 'none';
+    s.classList.remove('active');
+  });
+  const el = document.getElementById(id);
+  el.style.display = 'grid';
+  void el.offsetWidth; // reflow for animation restart
+  el.classList.add('active');
+}
+
+function md(src) {
+  // Minimal markdown → HTML for the prose renderer
+  let html = src.trim();
+
+  // Section headings → small-caps label
+  html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+
+  // Bold
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+
+  // Bullet lists
+  html = html.replace(/^[-*] (.+)$/gm, '<li>$1</li>');
+  html = html.replace(/(<li>[\s\S]+?<\/li>)(\n(?!<li>)|$)/g, '<ul>$1</ul>\n');
+
+  // Paragraphs
+  html = html.replace(/\n{2,}/g, '\n\n');
+  html = html.split('\n\n').map(block => {
+    if (/^<(h2|ul|li|p)/.test(block.trim())) return block;
+    return `<p>${block.replace(/\n/g, '<br>')}</p>`;
+  }).join('\n');
+
+  return html;
+}
+
+function renderQText(src) {
+  let html = src.trim();
+  html = html.replace(/^### (.+)$/gm, '<strong>$1</strong>');
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/^[-*] (.+)$/gm, '<li>$1</li>');
+  html = html.replace(/(<li>.*\n?)+/g, m => `<ul>${m}</ul>`);
+  html = html.replace(/^---$/gm, '');
+  html = html.split(/\n{2,}/).map(block => {
+    if (/^<(ul|strong)/.test(block.trim())) return block;
+    return block.replace(/\n/g, '<br>');
+  }).join('<br><br>');
+  return html;
+}
+
+function mdInterview(src) {
+  const sections = src.trim().split(/^## /m).filter(Boolean);
+  return sections.map(sec => {
+    const [heading, ...rest] = sec.split('\n').filter(Boolean);
+    const qs = rest.join('\n').trim().split(/\n\n+/).filter(Boolean);
+    const cards = qs.map(q => `
+      <div class="q-item">
+        <div class="q-text">${renderQText(q)}</div>
+      </div>`).join('');
+    return `<h2>${heading}</h2>${cards}`;
+  }).join('');
+}
+
+function animProg(id, durationMs) {
+  const el = document.getElementById(id);
+  const t0 = Date.now();
+  const tick = () => {
+    const p = Math.min(0.93, (Date.now() - t0) / durationMs);
+    el.style.width = (p * 100) + '%';
+    if (p < 0.93) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+
+/* ── Flow ───────────────────────────────────────────────────── */
+function goToProcessing() {
+  const jd = document.getElementById('jd-text').value.trim();
+  if (!jd) { document.getElementById('jd-text').focus(); return; }
+  S.jd        = jd;
+  S.info      = { ...MOCK_INFO };
+  S.research  = ''; S.resume = ''; S.interview = ''; S.correction = '';
+
+  setStep(1);
+  showScreen('screen-processing');
+  document.getElementById('proc-subtitle').textContent = `${S.info.company} · ${S.info.role}`;
+  saveState();
+
+  S.t0 = Date.now();
+  S.ticker = setInterval(() => {
+    const s = Math.floor((Date.now() - S.t0) / 1000);
+    document.getElementById('elapsed').textContent =
+      `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
+  }, 500);
+
+  // Resume agent (~3.4 s)
+  animProg('prog-resume', 3200);
+  setTimeout(() => {
+    document.getElementById('prog-resume').style.width = '100%';
+    document.getElementById('st-resume').textContent = 'Done';
+    document.getElementById('st-resume').className = 'agent-status done';
+  }, 3400);
+
+  // Research agent (~2.9 s)
+  animProg('prog-research', 2700);
+  setTimeout(() => {
+    document.getElementById('prog-research').style.width = '100%';
+    document.getElementById('st-research').textContent = 'Done';
+    document.getElementById('st-research').className = 'agent-status done';
+  }, 2900);
+
+  // Transition to review after both done
+  setTimeout(() => {
+    clearInterval(S.ticker);
+    S.research = MOCK_RESEARCH;
+    S.resume   = MOCK_RESUME;
+    saveState();
+    goToReview();
+  }, 3800);
+}
+
+function goToReview() {
+  setStep(2);
+  showScreen('screen-review');
+  document.getElementById('rev-company').textContent = S.info.company;
+  document.getElementById('rev-role').textContent    = S.info.role;
+  document.getElementById('rev-tag').textContent     = `${S.info.company} · ${S.info.role_type}`;
+  document.getElementById('review-prose').innerHTML  = `<div class="prose">${md(S.research)}</div>`;
+  saveState();
+}
+
+function goToReport() {
+  S.correction = document.getElementById('correction').value.trim();
+  if (S.correction) S.research += `\n\n## 用户补充\n${S.correction}`;
+  S.interview = MOCK_INTERVIEW;
+  saveState();
+  saveToHistory();
+  renderReport();
+}
+
+function renderReport() {
+  setStep(3);
+  showScreen('screen-report');
+
+  // Metadata
+  document.getElementById('m-company').textContent = S.info.company;
+  document.getElementById('m-role').textContent    = S.info.role;
+  document.getElementById('m-type').textContent    = S.info.role_type;
+  document.getElementById('m-date').textContent    = new Date().toISOString().slice(0,10);
+  document.getElementById('m-skills').innerHTML    = S.info.key_skills
+    .map(k => `<span class="skill-tag">${k}</span>`).join('');
+
+  // Tab panels
+  document.getElementById('panel-resume').innerHTML    = `<div class="prose">${md(S.resume)}</div>`;
+  document.getElementById('panel-research').innerHTML  = `<div class="prose">${md(S.research)}</div>
+    <div class="go-interview-bar">
+      <button class="btn-ruled" onclick="switchToInterviewTab()">Go to Interview →</button>
+    </div>`;
+  document.getElementById('panel-interview').innerHTML = `<div class="prose">${mdInterview(S.interview)}</div>`;
+
+  // Ensure Resume tab is shown first
+  document.querySelectorAll('.report-tab').forEach(t => t.classList.toggle('active', t.dataset.panel === 'resume'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'panel-resume'));
+}
+
+function switchToInterviewTab() {
+  document.querySelectorAll('.report-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelector('[data-panel="interview"]').classList.add('active');
+  document.getElementById('panel-interview').classList.add('active');
+}
+
+/* ── Tab switching ──────────────────────────────────────────── */
+document.getElementById('report-tabs').addEventListener('click', e => {
+  const btn = e.target.closest('.report-tab');
+  if (!btn) return;
+  document.querySelectorAll('.report-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('panel-' + btn.dataset.panel).classList.add('active');
+});
+
+/* ── Download ───────────────────────────────────────────────── */
+function downloadReport() {
+  const md = [
+    `# 求职准备报告 — ${S.info.company} ${S.info.role}`,
+    `\n生成日期：${new Date().toISOString().slice(0,10)}`,
+    '\n\n---\n\n## 一、定制简历\n', S.resume,
+    '\n\n---\n\n## 二、公司研究\n', S.research,
+    '\n\n---\n\n## 三、面试题库\n', S.interview,
+  ].join('\n');
+  const a = Object.assign(document.createElement('a'), {
+    href: URL.createObjectURL(new Blob([md], {type:'text/markdown'})),
+    download: `${S.info.company}_${new Date().toISOString().slice(0,10)}.md`,
+  });
+  a.click();
+}
+
+/* ── Init ───────────────────────────────────────────────────── */
+const now = new Date();
+document.getElementById('nav-date').textContent = now.getFullYear();
+document.getElementById('footer-status').textContent =
+  now.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}).toUpperCase();
+
+// Sync history from server on startup (updates localStorage cache)
+syncHistoryFromServer();
+
+// Restore last session from localStorage
+try {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (raw) {
+    const saved = JSON.parse(raw);
+    if (saved.step >= 3 && saved.resume && saved.research && saved.interview) {
+      Object.assign(S, saved);
+      renderReport();
+    } else if (saved.step >= 2 && saved.resume && saved.research) {
+      Object.assign(S, saved);
+      goToReview();
+    } else if (saved.jd) {
+      document.getElementById('jd-text').value = saved.jd;
+    }
+  }
+} catch(e) {}
+
+/* ── Profile ─────────────────────────────────────────────────── */
+const P = { doc: 'self', histIdx: -1, histTab: 'resume' };
+
+document.getElementById('profile-doc-tabs').addEventListener('click', e => {
+  const btn = e.target.closest('.profile-doc-tab');
+  if (!btn) return;
+  document.querySelectorAll('.profile-doc-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  P.doc = btn.dataset.doc;
+  if (P.doc === 'history') {
+    document.querySelector('.profile-content').classList.add('history-mode');
+    document.getElementById('profile-footer-save').style.display = 'none';
+    renderHistoryList();
+  } else {
+    document.querySelector('.profile-content').classList.remove('history-mode');
+    document.getElementById('profile-footer-save').style.display = '';
+    loadProfile(P.doc);
+  }
+});
+
+function openProfile() {
+  document.getElementById('profile-overlay').style.display = 'grid';
+  if (P.doc === 'history') {
+    document.querySelector('.profile-content').classList.add('history-mode');
+    document.getElementById('profile-footer-save').style.display = 'none';
+    renderHistoryList();
+  } else {
+    document.querySelector('.profile-content').classList.remove('history-mode');
+    document.getElementById('profile-footer-save').style.display = '';
+    loadProfile(P.doc);
+  }
+}
+
+function closeProfile() {
+  document.getElementById('profile-overlay').style.display = 'none';
+}
+
+async function loadProfile(key) {
+  setProfileStatus('Loading…', '');
+  try {
+    const res = await fetch(`/api/profile/${key}`);
+    if (!res.ok) throw new Error(res.status);
+    const { content } = await res.json();
+    document.getElementById('profile-editor').value = content;
+    updatePreview();
+    setProfileStatus('', '');
+  } catch {
+    setProfileStatus('Server not running — start with: python server.py', 'err');
+  }
+}
+
+async function saveProfile() {
+  const content = document.getElementById('profile-editor').value;
+  setProfileStatus('Saving…', '');
+  try {
+    const res = await fetch(`/api/profile/${P.doc}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content }),
+    });
+    if (!res.ok) throw new Error(res.status);
+    setProfileStatus('Saved', 'ok');
+    setTimeout(() => setProfileStatus('', ''), 2000);
+  } catch {
+    setProfileStatus('Save failed', 'err');
+  }
+}
+
+function updatePreview() {
+  const src = document.getElementById('profile-editor').value;
+  document.getElementById('profile-preview').innerHTML = md(src);
+}
+
+function setProfileStatus(text, cls) {
+  const el = document.getElementById('profile-status');
+  el.textContent = text;
+  el.className = cls;
+}
+
+/* ── History ─────────────────────────────────────────────────── */
+function renderHistoryList() {
+  const history = getHistory();
+  const listEl = document.getElementById('history-list');
+  if (history.length === 0) {
+    listEl.innerHTML = '<p style="color:var(--meta);font-style:italic;font-size:13px;line-height:1.9;">No history yet.<br>Complete a full run to see records here.</p>';
+    document.getElementById('history-detail').style.display = 'none';
+    return;
+  }
+  listEl.innerHTML = history.map((h, i) => `
+    <div class="history-item ${i === P.histIdx ? 'selected' : ''}" onclick="viewHistoryItem(${i})">
+      <div class="history-item-co">${h.company}${h.role ? ' · ' + h.role.split('·')[0].trim() : ''}</div>
+      <div class="history-item-date">${new Date(h.date).toLocaleDateString('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit'})}</div>
+    </div>
+  `).join('');
+
+  const idx = (P.histIdx >= 0 && P.histIdx < history.length) ? P.histIdx : 0;
+  P.histIdx = idx;
+  listEl.querySelectorAll('.history-item')[idx]?.classList.add('selected');
+  showHistoryDetail(history[idx]);
+}
+
+function viewHistoryItem(idx) {
+  P.histIdx = idx;
+  document.querySelectorAll('.history-item').forEach((el, i) =>
+    el.classList.toggle('selected', i === idx));
+  showHistoryDetail(getHistory()[idx]);
+}
+
+function showHistoryDetail(entry) {
+  if (!entry) return;
+  const detail = document.getElementById('history-detail');
+  detail.style.display = 'flex';
+  document.getElementById('hist-panel-jd').innerHTML =
+    `<pre style="white-space:pre-wrap;font-size:13px;line-height:1.85;font-family:var(--serif);color:var(--meta);">${entry.jd}</pre>`;
+  document.getElementById('hist-panel-resume').innerHTML   = `<div class="prose">${md(entry.resume || '')}</div>`;
+  document.getElementById('hist-panel-research').innerHTML = `<div class="prose">${md(entry.research || '')}</div>`;
+  document.getElementById('hist-panel-interview').innerHTML = `<div class="prose">${mdInterview(entry.interview || '')}</div>`;
+  document.getElementById('hist-restore-info').textContent =
+    `${entry.company} · ${new Date(entry.date).toLocaleDateString('zh-CN')}`;
+  switchHistoryTab(P.histTab || 'resume');
+}
+
+function switchHistoryTab(tab) {
+  P.histTab = tab;
+  document.querySelectorAll('.history-detail-tab').forEach(t =>
+    t.classList.toggle('active', t.dataset.htab === tab));
+  document.querySelectorAll('.hist-panel').forEach(p =>
+    p.style.display = p.dataset.htab === tab ? 'block' : 'none');
+}
+
+function restoreFromHistory() {
+  const history = getHistory();
+  if (P.histIdx < 0 || P.histIdx >= history.length) return;
+  const entry = history[P.histIdx];
+  S.jd = entry.jd;
+  S.info = { company: entry.company, role: entry.role, role_type: entry.role_type, key_skills: entry.key_skills || [] };
+  S.research  = entry.research;
+  S.resume    = entry.resume;
+  S.interview = entry.interview;
+  S.correction = '';
+  saveState();
+  closeProfile();
+  renderReport();
+}
+</script>
+</body>
+</html>

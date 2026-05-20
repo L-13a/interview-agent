@@ -38,8 +38,8 @@ Source information:
 
 def _gather_search_results(company: str, role_type: str) -> str:
     queries = [
-        f"{company} 业务线 产品矩阵 2025",
-        f"{company} {role_type} 战略 最新动态",
+        f"{company} 业务线 产品矩阵",
+        f"{company} {role_type} 动态",
         f"{company} 公司文化 价值观 面试风格",
     ]
     snippets = []
